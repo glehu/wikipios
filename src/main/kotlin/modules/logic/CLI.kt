@@ -6,8 +6,6 @@ import com.github.ajalt.mordant.table.table
 import com.github.ajalt.mordant.terminal.Terminal
 import kotlinx.coroutines.DelicateCoroutinesApi
 import modules.com.Server
-import sysdat.serverEnginge
-import sysdat.serverJob
 import kotlin.system.exitProcess
 
 @DelicateCoroutinesApi
@@ -33,14 +31,18 @@ class CLI {
                 captionBottom(TextColors.gray("An OpenSource OS for Bullseye Linux on the Raspberry Pi"))
             })
         while (!terminated) {
-            terminal.print(
-                "\n${TextColors.brightMagenta("pi")}:" + TextColors.brightBlue("> ")
-            )
+            cliPrepareUserInput()
             //Wait for user input
             inputArgs = (readLine() ?: "").split(" ")
             terminated = cliHandleInput(inputArgs)
         }
         cliExit()
+    }
+
+    private fun cliPrepareUserInput() {
+        terminal.print(
+            "\n${TextColors.brightMagenta("pi")}:" + TextColors.brightBlue("> ")
+        )
     }
 
     /**
@@ -62,22 +64,21 @@ class CLI {
             cliErrorNotEnoughArguments(args)
         } else {
             when (args[1]) {
-                "server" -> Server().serve()
+                "server" -> Server.serve()
             }
         }
     }
 
     private fun cliErrorNotEnoughArguments(args: List<String>) {
         terminal.println(
-            TextColors.red("ERROR: Not enough arguments! Type ${TextColors.white("help ${args[0]}")} for a list of arguments.")
+            TextColors.red(
+                "ERROR: Not enough arguments! Type ${TextColors.white("help ${args[0]}")} for a list of arguments."
+            )
         )
     }
 
     private fun cliExit() {
-        if (serverJob != null) {
-            serverEnginge!!.stop(100L, 100L)
-            serverJob!!.cancel()
-        }
+        Server.stop()
         terminal.println(
             "\n\n${TextColors.green("System successfully terminated by user.")}"
         )
@@ -100,8 +101,8 @@ class CLI {
         val start =
             "start ${TextColors.gray("[argument]")} -> starts ${TextColors.gray("[argument]")}"
         val startDetail = "$start\n" +
-                "\tserver -> starts the server\n" +
-                "\ttelnet -> starts the telnet server"
+                "\t${TextColors.gray("server")} -> starts the server\n" +
+                "\t${TextColors.gray("telnet")} -> starts the telnet server"
 
         //****************************************************
         val helpText = when (args[1]) {
